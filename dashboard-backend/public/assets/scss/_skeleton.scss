@@ -1,0 +1,30 @@
+// ─── Add these rules to your existing _listing.scss ──────────
+// They add the loading skeleton shimmer animation on cards
+
+// Keyframe
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+// Base skeleton element
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+
+  // Variants
+  &--title  { height: 22px; width: 65%; border-radius: 4px; }
+  &--text   { height: 13px; width: 100%; border-radius: 3px; }
+  &--tag    { height: 24px; width: 70px; border-radius: 20px; }
+  &--stat   { height: 14px; width: 90%; border-radius: 3px; }
+  &--btn    { height: 34px; width: 90px; border-radius: 5px; }
+  &--inline { height: 14px; border-radius: 3px; vertical-align: middle; }
+}
+
+// Skeleton card: remove hover shadow
+.listing-card--skeleton {
+  pointer-events: none;
+  &:hover { box-shadow: none; border-color: #e5e7eb; }
+}

@@ -1,0 +1,356 @@
+// ============================================================
+// BOOMR – Auth Pages  (_auth.scss)
+// Sign In + Sign Up  —  Bootstrap utilities + SCSS BEM
+// ============================================================
+
+// ─── Tokens ──────────────────────────────────────────────────
+$blue:          #7c3aed;
+$blue-hover:    #5b50e1;
+$border:        #D1D5DB;
+$border-active: #7c3aed;
+$text:          #111827;
+$text-muted:    #6B7280;
+$text-light:    #9CA3AF;
+$white:         #FFFFFF;
+$radius:        8px;
+$radius-sm:     6px;
+
+// ============================================================
+// PAGE SHELL  — two-column split layout
+// ============================================================
+.auth-page {
+  display: flex;
+  min-height: 100vh;
+  background: $white;
+
+  // ── Left column: logo + form ──────────────────────────────
+  &__left {
+    flex: 0 0 44%;
+    max-width: 44%;
+    display: flex;
+    flex-direction: column;
+    padding: 36px 48px 40px;
+    position: relative;
+
+    @media (max-width: 900px) {
+      flex: 0 0 100%;
+      max-width: 100%;
+      padding: 28px 24px 40px;
+    }
+  }
+
+  // ── Logo at top-left ──────────────────────────────────────
+  &__logo {
+    margin-bottom: 0;
+
+    img { display: block; }
+  }
+
+  // ── Form centred vertically in remaining space ────────────
+  &__form-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 600px;
+    padding-top: 40px;
+
+    @media (max-width: 900px) {
+      max-width: 100%;
+      padding-top: 32px;
+    }
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: $text;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+    line-height: 1.15;
+  }
+
+  &__subtitle {
+    font-size: 0.875rem;
+    color: $text-muted;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  &__footer-text {
+    margin-top: 24px;
+    font-size: 0.875rem;
+    color: $text-muted;
+    text-align: center;
+  }
+
+  &__footer-link {
+    color: $blue;
+    font-weight: 400;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  // ── Right column: illustration ────────────────────────────
+  &__right {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 16px 16px 0;
+
+    @media (max-width: 900px) {
+      display: none;   // hide illustration on mobile
+    }
+  }
+
+  &__illustration {
+    position: absolute;
+    inset: 0;
+
+    img {
+      object-fit: cover;
+      object-position: center top;
+    }
+  }
+}
+
+// ============================================================
+// AUTH FORM
+// ============================================================
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  // ── Individual field ──────────────────────────────────────
+  &__field {
+    position: relative;
+    border: 1.5px solid $border;
+    border-radius: $radius;
+    padding: 10px 14px 8px;
+    background: $white;
+    transition: border-color .18s;
+
+    // Active / focused — blue border, label floats
+    &--active,
+    &:focus-within {
+      border-color: $border-active;
+
+      .auth-form__label {
+        color: $border-active;
+      }
+    }
+
+    // Date of birth — extra left padding for calendar icon
+    &--dob {
+      padding-left: 14px;
+    }
+  }
+
+  // Floating label inside the field box
+  &__label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: $text-muted;
+    margin-bottom: 2px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    transition: color .18s;
+  }
+
+  // Text input — no border (border is on the field wrapper)
+  &__input {
+    display: block;
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: $text;
+    padding: 0;
+    line-height: 1.4;
+
+    &::placeholder { color: $text-light; }
+
+    // Extra right padding when eye icon is present
+    &--with-icon { padding-right: 32px; }
+
+    // Date input — hide native UI chrome, show our styled display
+    &--date {
+      opacity: 0;
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+    }
+  }
+
+  // Wrapper for inputs that need an icon overlay (eye, calendar)
+  &__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  // Calendar icon for DOB — shows to left of formatted text
+  &__dob-icon {
+    display: flex;
+    align-items: center;
+    color: $text-muted;
+    margin-right: 8px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  // Formatted date text overlay (e.g. "11 December 1997")
+  &__dob-display {
+    font-size: 0.9rem;
+    color: $text;
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+    line-height: 1.4;
+  }
+
+  // Show/hide password eye button
+  &__eye {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: $text-light;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+    transition: color .15s;
+
+    &:hover { color: $text-muted; }
+  }
+
+  // ── "Keep me logged in" checkbox ─────────────────────────
+  &__checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: $text;
+    user-select: none;
+    margin-top: 2px;
+
+    input[type="checkbox"] {
+      // Hide native, use custom box
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+
+      &:checked + .auth-form__checkbox-box {
+        background: $blue;
+        border-color: $blue;
+
+        &::after {
+          opacity: 1;
+          transform: rotate(45deg) scale(1);
+        }
+      }
+    }
+  }
+
+  &__checkbox-box {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid $border;
+    border-radius: 4px;
+    background: $white;
+    position: relative;
+    transition: background .15s, border-color .15s;
+
+    // Checkmark
+    &::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 6px;
+      height: 10px;
+      border: 2px solid $white;
+      border-top: none;
+      border-left: none;
+      opacity: 0;
+      transform: rotate(45deg) scale(0.6);
+      transition: opacity .15s, transform .15s;
+    }
+  }
+
+  // ── Primary submit button ────────────────────────────────
+  &__submit {
+    width: 100%;
+    background: $blue;
+    color: $white;
+    border: none;
+    border-radius: $radius;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 400;
+    cursor: pointer;
+    letter-spacing: .01em;
+    transition: background .18s, transform .1s;
+    margin-top: 4px;
+
+    &:hover  { background: $blue-hover; }
+    &:active { transform: scale(.99); }
+  }
+
+  // ── "or" divider ─────────────────────────────────────────
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: $text-light;
+    font-size: 0.85rem;
+
+    &::before,
+    &::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: $border;
+    }
+  }
+
+  // ── Google button ────────────────────────────────────────
+  &__google {
+    width: 100%;
+    background: $white;
+    color: $text;
+    border: 1.5px solid $border;
+    border-radius: $radius;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: border-color .18s, box-shadow .18s;
+
+    &:hover {
+      border-color: darken($border, 10%);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+  }
+}

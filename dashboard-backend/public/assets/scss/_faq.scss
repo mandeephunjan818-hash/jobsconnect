@@ -1,0 +1,194 @@
+@use 'rs';
+
+/* FAQ CSS */
+
+.faq-accordion {
+   .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+   }
+
+   .accordion-item {
+      position: relative;
+      border-radius: 10px;
+      background: var(--Secondary);
+      border: 0;
+
+      .accordion-button {
+         border-radius: 10px;
+         background: var(--Secondary);
+         color: var(--Heading);
+         font-size: 18px;
+         font-weight: 400;
+         padding: 16px 30px;
+
+         @media #{rs.$bp-xl} {
+            font-size: 20px;
+         }
+
+         &:focus {
+            box-shadow: none !important;
+         }
+
+         &::after {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-position: center;
+            background-color: var(--Heading);
+            color: var(--White);
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22icon%20icon-tabler%20icons-tabler-outline%20icon-tabler-chevron-down%22%3E%3Cpath%20stroke%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%20fill%3D%22none%22/%3E%3Cpath%20d%3D%22M6%209l6%206l6%20-6%22/%3E%3C/svg%3E");
+         }
+
+         &:not(.collapsed) {
+            box-shadow: none;
+            color: var(--White);
+            background-color: var(--Primary);
+            border-radius: 10px 10px 0 0;
+
+            &::after {
+               background-color: var(--White);
+               background-image: url("data:image/svg+xml,%3Csvg%20%20xmlns=%22http://www.w3.org/2000/svg%22%20%20width=%2224%22%20%20height=%2224%22%20%20viewBox=%220%200%2024%2024%22%20%20fill=%22none%22%20%20stroke=%22currentColor%22%20%20stroke-width=%222%22%20%20stroke-linecap=%22round%22%20%20stroke-linejoin=%22round%22%20%20class=%22icon%20icon-tabler%20icons-tabler-outline%20icon-tabler-chevron-down%22%3E%3Cpath%20stroke=%22none%22%20d=%22M0%200h24v24H0z%22%20fill=%22none%22/%3E%3Cpath%20d=%22M6%209l6%206l6%20-6%22%20/%3E%3C/svg%3E");
+            }
+         }
+      }
+
+      .accordion-body {
+         background-color: var(--Secondary);
+         padding: 20px 30px;
+         color: var(--Text);
+         font-size: 16px;
+         border-radius: 0 0 10px 10px;
+      }
+   }
+
+   &.style-two {
+      .accordion {
+         display: flex;
+         flex-wrap: wrap;
+         flex-direction: row;
+         gap: 30px;
+
+         .accordion-item {
+            flex: 0 0 100%;
+            width: 100%;
+
+            @media #{rs.$bp-md} {
+               flex: 0 0 calc(50% - 15px);
+               width: calc(50% - 15px);
+            }
+         }
+      }
+
+      .accordion-item {
+         background: transparent;
+         border-radius: 8px;
+
+         .accordion-button {
+            background-color: var(--White);
+            border-radius: 8px;
+
+            &:not(.collapsed) {
+               color: var(--Primary);
+               background-color: var(--White);
+
+               &::after {
+                  background-color: var(--Primary);
+                  color: var(--White);
+                  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22icon%20icon-tabler%20icons-tabler-outline%20icon-tabler-chevron-down%22%3E%3Cpath%20stroke%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%20fill%3D%22none%22/%3E%3Cpath%20d%3D%22M6%209l6%206l6%20-6%22/%3E%3C/svg%3E");
+               }
+            }
+         }
+
+         .accordion-body {
+            padding-top: 0;
+            background-color: var(--White);
+            color: var(--Text);
+            border-radius: 0 0 8px 8px;
+         }
+      }
+   }
+
+   &.style-three {
+      .faq-title {
+         font-size: clamp(24px, 2.5vw, 36px);
+      }
+
+      .accordion {
+         display: flex;
+         flex-wrap: wrap;
+         flex-direction: row;
+         gap: 30px;
+         border-radius: 10px;
+
+         .accordion-item {
+            flex: 0 0 100%;
+            width: 100%;
+         }
+      }
+
+      .accordion-item {
+         background: var(--Primary);
+         border-radius: 10px;
+
+         .accordion-button {
+            background-color: var(--Secondary);
+            border-radius: 8px;
+            color: var(--Heading);
+            font-size: clamp(18px, 2vw, 24px);
+
+            &:not(.collapsed) {
+               color: var(--White);
+               background-color: var(--Primary);
+
+               &::after {
+                  background-color: rgba(255, 255, 255, 0.2);
+                  color: var(--White);
+                  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20class%3D%22icon%20icon-tabler%20icons-tabler-outline%20icon-tabler-chevron-down%22%3E%3Cpath%20stroke%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%20fill%3D%22none%22/%3E%3Cpath%20d%3D%22M6%209l6%206l6%20-6%22/%3E%3C/svg%3E");
+               }
+            }
+         }
+
+         .accordion-body {
+            padding-top: 0;
+            background-color: var(--Primary);
+            color: var(--White);
+            border-radius: 0 0 8px 8px;
+
+            @media #{rs.$bp-xl} {
+               font-size: 18px;
+            }
+         }
+      }
+   }
+
+   &.theme-two {
+      .accordion-item {
+         background: var(--White);
+
+         .accordion-button {
+            background: var(--White);
+            color: var(--Heading);
+
+            &:not(.collapsed) {
+               color: var(--White);
+               background-color: var(--Primary);
+
+               &::after {
+                  background-color: var(--White);
+               }
+            }
+         }
+
+         .accordion-body {
+            background-color: var(--White);
+         }
+      }
+   }
+}
+
+.faq-question-section {
+   background-position: center center;
+   background-repeat: no-repeat;
+}

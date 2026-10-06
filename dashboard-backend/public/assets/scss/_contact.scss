@@ -1,0 +1,131 @@
+@use 'rs';
+
+/* Contact CSS */
+
+.form-control {
+    transition: var(--Animation-Duration);
+    border-radius: 8px;
+    background: var(--White);
+    height: 60px;
+    font-size: 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.499);
+    padding: 1rem 1.25rem;
+    color: var(--Text);
+
+    &:focus {
+        box-shadow: none;
+        border-color: var(--Border);
+    }
+
+    &::placeholder {
+        color: var(--Text);
+    }
+}
+
+.form-select {
+    transition: var(--Animation-Duration);
+    border-radius: 8px;
+    background: var(--White);
+    height: 60px;
+    font-size: 1rem;
+    border: 1px solid transparent;
+    padding: 0 1.25rem;
+    color: var(--Text);
+    cursor: pointer;
+
+    &:focus {
+        box-shadow: none;
+        border-color: var(--Border);
+    }
+}
+
+textarea {
+    &.form-control {
+        min-height: 10rem;
+    }
+}
+
+.contact-info-card {
+    transition: var(--Animation-Duration);
+    background: var(--Secondary);
+    border-radius: 20px;
+    padding: 36px 20px;
+    height: 100%;
+
+    @media #{rs.$bp-xl} {
+        padding: 50px 40px;
+    }
+
+    hr {
+        background: var(--Border);
+        margin-top: 30px;
+        margin-bottom: 30px;
+        opacity: 0.3;
+    }
+}
+
+.contact-sm-card {
+    p {
+        margin-bottom: 0.5rem;
+
+        @media #{rs.$bp-xl} {
+            font-size: 18px;
+        }
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .social-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        a {
+            transition: var(--Animation-Duration);
+            border: 1px solid var(--Text);
+            background-color: var(--Secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            color: var(--Text);
+   
+            @media #{rs.$bp-xl} {
+               width: 44px;
+               height: 44px;
+               font-size: 20px;
+            }
+   
+            &:hover,
+            &:focus {
+               background-color: var(--Primary);
+               border-color: var(--Primary);
+               color: var(--White);
+               transform: translateY(-5px);
+            }
+         }
+    }
+}
+
+.maps-section {
+    transform: translateY(6px);
+
+    iframe {
+        width: 100%;
+        height: 400px;
+        filter: grayscale(0.5);
+
+        @media #{rs.$bp-md} {
+            height: 500px;
+        }
+
+        @media #{rs.$bp-xl} {
+            height: 700px;
+        }
+    }
+}

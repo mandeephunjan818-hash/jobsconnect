@@ -1,0 +1,59 @@
+@font-face {
+    font-family: "flaticon_bytexbd";
+    src: url("./fonts/flaticon_bytexbd.woff2") format("woff2"),
+        url("./fonts/flaticon_bytexbd.woff") format("woff"),
+        url("./fonts/flaticon_bytexbd.ttf") format("truetype"),
+        url("./fonts/flaticon_bytexbd.svg#flaticon_bytexbd") format("svg")
+}
+
+i[class^="flaticon-"]:before,
+i[class*=" flaticon-"]:before {
+    font-family: flaticon_bytexbd !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1 !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.flaticon-coding:before {
+    content: "\f101";
+}
+
+.flaticon-trust:before {
+    content: "\f102";
+}
+
+.flaticon-analysis:before {
+    content: "\f103";
+}
+
+.flaticon-tap:before {
+    content: "\f104";
+}
+
+.flaticon-update:before {
+    content: "\f105";
+}
+
+.flaticon-support:before {
+    content: "\f106";
+}
+
+.flaticon-email:before {
+    content: "\f107";
+}
+
+.flaticon-cyber-security:before {
+    content: "\f108";
+}
+
+.flaticon-new-features:before {
+    content: "\f109";
+}
+
+.flaticon-support-1:before {
+    content: "\f10a";
+}

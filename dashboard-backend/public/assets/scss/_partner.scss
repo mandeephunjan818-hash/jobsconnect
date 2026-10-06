@@ -1,0 +1,51 @@
+@use 'rs';
+
+/* Partner CSS */
+
+.partner-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+
+    @media #{rs.$bp-md} {
+        gap: 1.5rem;
+        flex-wrap: nowrap;
+    }
+
+    @media #{rs.$bp-xl} {
+        gap: 2rem;
+        justify-content: space-between;
+    }
+
+    @media #{rs.$bp-xxl} {
+        gap: 40px;
+    }
+
+    p {
+        font-size: 20px;
+        font-weight: 400;
+        flex-shrink: 0;
+        color: var(--Heading);
+    }
+
+    a {
+        display: block;
+        text-align: center;
+
+        img {
+            max-height: 24px;
+            width: auto;
+            object-fit: contain;
+
+            @media #{rs.$bp-xxl} {
+                max-height: 30px;
+            }
+        }
+
+        &:hover,
+        &:focus {
+            transform: translateX(-5px);
+        }
+    }
+}

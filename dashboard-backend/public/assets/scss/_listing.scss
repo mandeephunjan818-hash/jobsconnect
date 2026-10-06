@@ -1,0 +1,623 @@
+// ============================================================
+// BOOMR – Listing Page  (_listing.scss)
+// Full update: header overlap fix + mobile responsive + live search
+// ============================================================
+
+// ─── Design Tokens ───────────────────────────────────────────
+$blue:          #1553D0;
+$blue-hover:    #1244b0;
+$blue-light:    #EEF3FF;
+$blue-border:   #C7D8FF;
+
+$text:          #111827;
+$text-sub:      #374151;
+$text-muted:    #6B7280;
+$text-light:    #9CA3AF;
+$border:        #E5E7EB;
+$white:         #FFFFFF;
+
+$radius-sm:     4px;
+$radius:        6px;
+$radius-pill:   20px;
+
+// ─── Breakpoints ─────────────────────────────────────────────
+$md: 768px;
+$lg: 992px;
+
+// ============================================================
+// LISTING PAGE
+// ============================================================
+.listing-page {
+
+  // ── Header band ──
+  // margin-top accounts for the fixed HeaderTwo height (~72px)
+  // Adjust this value to match your actual header height
+  &__header {
+    padding: 76px 0 28px;
+
+    @media (max-width: $md) {
+      padding: 64px 0 20px;
+    }
+  }
+
+  // ── Hero row: title left, search right ──
+  &__hero {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+
+    // Stack vertically on mobile
+    @media (max-width: $md) {
+      flex-direction: column;
+      gap: 20px;
+    }
+  }
+
+  &__hero-left {
+    flex: 1 1 0%;
+    max-width: 520px;
+
+    @media (max-width: $md) {
+      max-width: 100%;
+    }
+  }
+
+  &__heading {
+    font-size: clamp(1.6rem, 3vw, 2.35rem);
+    font-weight: 800;
+    color: $text;
+    line-height: 1.18;
+    letter-spacing: -0.025em;
+    margin-bottom: 12px;
+  }
+
+  &__subtext {
+    font-size: 0.84rem;
+    color: $text-muted;
+    line-height: 1.7;
+    margin-bottom: 0;
+  }
+
+  &__search-box {
+    flex-shrink: 0;
+    width: 390px;
+    padding-top: 4px;
+
+    @media (max-width: $md) {
+      width: 100%;
+      padding-top: 0;
+    }
+  }
+
+  // ── Body band ──
+  &__body {
+    padding: 32px 0 80px;
+    border-top: 1px solid $border;
+
+    @media (max-width: $md) {
+      padding: 20px 0 60px;
+    }
+  }
+
+  // ── Mobile top bar (count + filter toggle) ──
+  &__mobile-bar {
+    padding-bottom: 4px;
+    border-bottom: 1px solid $border;
+    margin-bottom: 16px !important;
+  }
+
+  // ── Mobile filter toggle button ──
+  &__filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: $white;
+    border: 1.5px solid $border;
+    border-radius: $radius;
+    padding: 7px 16px;
+    font-size: 0.83rem;
+    font-weight: 400;
+    color: $text;
+    cursor: pointer;
+    transition: border-color .18s, color .18s;
+
+    &:hover { border-color: $blue; color: $blue; }
+  }
+
+  // Active filter count badge on the toggle button
+  &__filter-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: $blue;
+    color: $white;
+    border-radius: 50%;
+    font-size: .7rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  // ── Mobile filter drawer ──
+  &__mobile-drawer {
+    background: $white;
+    border: 1px solid $border;
+    border-radius: $radius;
+    padding: 20px 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.07);
+  }
+}
+
+// ─── Layout ──────────────────────────────────────────────────
+.listing-layout {
+  margin-top: 28px;
+
+  @media (max-width: $md) {
+    margin-top: 0;
+  }
+}
+
+// ============================================================
+// SEARCH BAR
+// ============================================================
+.listing-search {
+  display: flex;
+  align-items: center;
+  background: $white;
+  border: 1.5px solid $border;
+  border-radius: $radius;
+  padding: 5px 5px 5px 14px;
+  gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  transition: border-color .2s, box-shadow .2s;
+
+  &:focus-within {
+    border-color: $blue;
+    box-shadow: 0 0 0 3px rgba($blue, .12);
+  }
+
+  &__icon {
+    color: $text-light;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: $text;
+    min-width: 0;
+
+    &::placeholder { color: $text-light; }
+  }
+
+  // Tiny spinning dot shown during live search
+  &__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid $border;
+    border-top-color: $blue;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: spin .6s linear infinite;
+  }
+
+  &__btn {
+    background: $blue;
+    color: $white;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 10px 22px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .18s;
+    flex-shrink: 0;
+
+    &:hover  { background: $blue-hover; }
+    &:active { transform: scale(.98); }
+
+    @media (max-width: 420px) {
+      padding: 10px 14px;
+      font-size: .8rem;
+    }
+  }
+
+  &__active-label {
+    font-size: .78rem;
+    color: $text-muted;
+
+    strong { color: $text; }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ============================================================
+// FILTER SIDEBAR
+// ============================================================
+.filter-sidebar {
+  position: sticky;
+  top: 92px;   // header height + small gap
+
+  @media (max-width: $md) {
+    position: static;  // not sticky inside mobile drawer
+  }
+
+  &__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text;
+    margin-bottom: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $border;
+  }
+}
+
+.filter-section {
+  border-bottom: 1px solid $border;
+  padding: 12px 0;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: .875rem;
+    font-weight: 400;
+    color: $text;
+    text-align: left;
+    line-height: 1.4;
+
+    svg { flex-shrink: 0; color: $text-muted; }
+    &:focus-visible { outline: 2px solid $blue; border-radius: 2px; }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 12px;
+  }
+
+  &__show-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 2px 0 0;
+    font-size: .8rem;
+    font-weight: 500;
+    color: $blue;
+    cursor: pointer;
+
+    &:hover { text-decoration: underline; }
+  }
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: .84rem;
+  color: $text;
+  line-height: 1.4;
+
+  &__input {
+    width: 15px !important;
+    height: 15px !important;
+    flex-shrink: 0;
+    cursor: pointer;
+    border-radius: 3px !important;
+    accent-color: $blue;
+  }
+
+  &__label { cursor: pointer; margin-bottom: 0; }
+}
+
+// ============================================================
+// LISTING CARD
+// ============================================================
+.listing-card {
+  background: $white;
+  border: 1px solid $border;
+  border-radius: $radius;
+  margin-bottom: 14px;
+  transition: box-shadow .2s ease, border-color .2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 22px rgba(0,0,0,.07);
+    border-color: darken($border, 5%);
+  }
+
+  &__body {
+    padding: 20px 22px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__main {
+    display: flex;
+    align-items: flex-start;
+
+    // Stack on mobile
+    @media (max-width: $md) {
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
+
+  &__info {
+    flex: 1 1 0%;
+    padding-right: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    @media (max-width: $md) {
+      padding-right: 0;
+    }
+  }
+
+  &__title {
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: $text;
+    margin-bottom: 2px;
+  }
+
+  &__location {
+    font-size: .77rem;
+    color: $text-muted;
+    margin-bottom: 5px;
+  }
+
+  &__desc {
+    font-size: .82rem;
+    color: $text-muted;
+    line-height: 1.6;
+    margin-bottom: 3px;
+  }
+
+  &__more {
+    font-size: .81rem;
+    font-weight: 500;
+    color: $blue;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 8px;
+
+    &:hover { text-decoration: underline; color: $blue-hover; }
+  }
+
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: $blue-light;
+    color: $text-sub;
+    font-size: .77rem;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: $radius-pill;
+    border: 1px solid $blue-border;
+    width: fit-content;
+  }
+
+  &__tag-icon { display: flex; align-items: center; color: $blue; }
+
+  // Vertical divider
+  &__divider {
+    width: 1px;
+    background: $border;
+    align-self: stretch;
+    flex-shrink: 0;
+    margin: 0 22px;
+  }
+
+  // Financials
+  &__financials {
+    flex-shrink: 0;
+    width: 255px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 9px;
+
+    @media (max-width: $lg) { width: 220px; }
+
+    // Full width stacked on mobile, with top border instead of left divider
+    @media (max-width: $md) {
+      width: 100%;
+      padding-top: 14px;
+      border-top: 1px solid $border;
+    }
+  }
+
+  &__stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: .83rem;
+
+    @media (max-width: $md) {
+      // Side-by-side label: value on mobile too
+      justify-content: space-between;
+    }
+  }
+
+  &__stat-label { color: $text-muted; font-weight: 400; white-space: nowrap; }
+  &__stat-value { font-weight: 700; color: $text; font-size: .875rem; }
+
+  // Action row
+  &__actions {
+    padding-top: 12px;
+    border-top: 1px solid $border;
+
+    @media (max-width: 420px) {
+      flex-direction: column;
+      align-items: stretch !important;
+
+      .listing-card__save,
+      .listing-card__contact {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  &__save {
+    background: $white;
+    color: $text;
+    border: 1.5px solid $border;
+    border-radius: $radius-sm;
+    padding: 7px 18px;
+    font-size: .83rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .18s, color .18s;
+
+    &:hover { border-color: $blue; color: $blue; }
+  }
+
+  &__contact {
+    background: $blue;
+    color: $white;
+    border: none;
+    border-radius: $radius-sm;
+    padding: 7px 20px;
+    font-size: .83rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background .18s;
+
+    &:hover { background: $blue-hover; }
+  }
+}
+
+// ============================================================
+// PAGINATION
+// ============================================================
+.pagination-wrap {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  @media (max-width: $md) {
+    margin-top: 24px;
+  }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1.5px solid $border;
+    border-radius: $radius-sm;
+    background: $white;
+    color: $text;
+    font-size: .86rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+
+    &.page-link { text-decoration: none; }
+    &:hover:not(:disabled) { border-color: $blue; color: $blue; }
+    &:disabled { opacity: .38; cursor: not-allowed; pointer-events: none; }
+
+    &--active {
+      background: $blue !important;
+      border-color: $blue !important;
+      color: $white !important;
+
+      &:hover { background: $blue-hover !important; border-color: $blue-hover !important; }
+    }
+  }
+
+  &__ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    color: $text-muted;
+    font-size: .86rem;
+    pointer-events: none;
+
+    &.page-link { border: none; background: transparent; }
+  }
+
+  &__info {
+    font-size: .81rem;
+    color: $text-muted;
+    margin: 0;
+  }
+}
+
+// ============================================================
+// EMPTY / ERROR STATE
+// ============================================================
+.listing-empty {
+  text-align: center;
+  padding: 56px 20px;
+  color: $text-muted;
+
+  &__icon  { font-size: 2.5rem; margin-bottom: 12px; }
+  &__title { font-size: 1rem; font-weight: 400; color: $text-sub; margin-bottom: 6px; }
+  &__text  { font-size: .85rem; }
+}
+
+// ============================================================
+// SKELETON SHIMMER
+// ============================================================
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+  display: block;
+
+  &--title  { height: 22px; width: 65%; }
+  &--text   { height: 13px; width: 100%; }
+  &--tag    { height: 24px; width: 70px; border-radius: 20px; }
+  &--stat   { height: 14px; width: 90%; }
+  &--btn    { height: 34px; width: 90px; border-radius: 5px; }
+  &--inline { height: 14px; border-radius: 3px; vertical-align: middle; }
+}
+
+.listing-card--skeleton {
+  pointer-events: none;
+  &:hover { box-shadow: none; border-color: $border; }
+}

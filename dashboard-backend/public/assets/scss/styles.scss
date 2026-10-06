@@ -1,0 +1,68 @@
+/* ---------------------
+   [Master Stylesheet]
+   Template Name: Startix - Multipurpose SaaS Landing HTML5 Template
+   Version: 0.0.1
+   Author: 
+--------------------- */
+
+/* ---------------------
+   [Table of Contents]
+
+   1. Global Elements
+      1.1 Responsive Breakpoint CSS
+      1.2 Reboot CSS
+      1.3 Miscellaneous CSS
+      1.4 Preloader CSS
+      1.5 Jarallax CSS
+   2. Core CSS
+      2.1 Header CSS
+      2.2 Hero CSS
+      2.3 About CSS
+      2.4 Process CSS
+      2.5 Team CSS
+      2.6 Testimonial CSS
+      2.7 Video CSS
+      2.8 Blog CSS
+      2.9 Footer CSS
+      2.10 CTA CSS
+      2.11 Cookie CSS
+      2.12 Contact CSS
+      2.13 FAQ CSS
+      2.14 Breadcrumb CSS
+      2.15 Partner CSS
+      2.16 Project CSS
+      2.17 Newsletter CSS
+      2.18 Pricing CSS
+      2.19 Theme CSS
+--------------------- */
+
+@use 'rs';
+@use 'reboot';
+@use 'miscellaneous';
+@use 'preloader';
+@use 'jarallax';
+@use 'header';
+@use 'hero';
+@use 'about';
+@use 'process';
+@use 'team';
+@use 'testimonial';
+@use 'video';
+@use 'blog';
+@use 'footer';
+@use 'cta';
+@use 'cookie';
+@use 'contact';
+@use 'faq';
+@use 'breadcrumb';
+@use 'partner';
+@use 'features';
+@use 'service';
+@use 'project';
+@use 'newsletter';
+@use 'pricing';
+@use 'theme';
+@use 'demo';
+
+// Google Fonts
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');

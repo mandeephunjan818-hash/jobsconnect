@@ -1,0 +1,215 @@
+@use 'rs';
+
+/* Features CSS */
+
+.app-feature-section {
+    position: relative;
+    z-index: 1;
+
+    .big-text {
+        font-family: var(--Font-Primary);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+        -webkit-text-stroke-width: 1px;
+        -webkit-text-stroke-color: rgba(40, 44, 50, 0.50);
+        font-size: 120px;
+        font-weight: 400;
+        line-height: 1;
+        color: transparent;
+
+        @media #{rs.$bp-md} {
+            font-size: 150px;
+        }
+
+        @media #{rs.$bp-xxl} {
+            font-size: 200px;
+        }
+    }
+
+    .feature-cards {
+        gap: 3rem;
+
+        @media #{rs.$bp-md} {
+            gap: 12rem;
+        }
+
+        @media #{rs.$bp-xxl} {
+            gap: 260px;
+        }
+    }
+}
+
+.app-feature-card {
+    transition: var(--Animation-Duration);
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+
+    .feature-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 64px;
+        height: 64px;
+        border-radius: 6px;
+        background-color: var(--Secondary);
+        transition: var(--Animation-Duration);
+        margin-bottom: 40px;
+        color: var(--Heading);
+        font-size: 36px;
+
+        i {
+            line-height: 0.8;
+        }
+    }
+
+    h2 {
+        transition: var(--Animation-Duration);
+    }
+
+    &.text-md-end {
+        @media #{rs.$bp-md} {
+            .feature-icon {
+                margin-left: auto;
+            }
+        }
+    }
+
+    &.active,
+    &:hover,
+    &:focus {
+        h2 {
+            color: var(--Primary);
+        }
+
+        .feature-icon {
+            background-color: var(--Primary);
+            color: var(--White);
+        }
+    }
+}
+
+.app-feature-img {
+    position: relative;
+    z-index: 1;
+
+    img {
+        transition: var(--Animation-Duration);
+        width: 100%;
+        display: none;
+        opacity: 0;
+
+        &.active {
+            display: block;
+            opacity: 1;
+        }
+    }
+}
+
+.featured-content {
+    h2 {
+        font-size: clamp(24px, 4.5vw, 36px);
+    }
+}
+
+.featured-img {
+    position: relative;
+    z-index: 1;
+    border-radius: 12px;
+    box-shadow: 0px 8px 30px 0px rgba(45, 54, 67, 0.08);
+
+    &::after {
+        width: calc(100% + 30px);
+        height: 100%;
+        content: '';
+        position: absolute;
+        bottom: 30px;
+        left: -30px;
+        border-radius: 12px;
+        background-color: #E3E5FD;
+        z-index: 1;
+    }
+
+    img {
+        border-radius: 12px;
+        position: relative;
+        z-index: 10;
+        width: 100%;
+    }
+}
+
+.featured-list {
+    display: flex;
+    gap: 1rem;
+    padding-left: 0;
+    list-style: none;
+    flex-wrap: wrap;
+
+    @media #{rs.$bp-lg} {
+        gap: 1.5rem;
+    }
+
+    @media #{rs.$bp-xxl} {
+        gap: 30px;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 18px;
+        color: var(--Heading);
+        flex: 0 0 calc(100% - 15px);
+        width: calc(100% - 15px);
+        font-weight: 500;
+
+        svg {
+            flex-shrink: 0;
+        }
+
+        @media #{rs.$bp-lg} {
+            flex: 0 0 calc(50% - 15px);
+            width: calc(50% - 15px);
+        }
+    }
+}
+
+.feature-section {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: top left;
+    background-color: var(--Secondary);
+
+    @media #{rs.$bp-md} {
+        background-color: transparent;
+    }
+}
+
+.feature-card {
+    transition: var(--Animation-Duration);
+    border-radius: 18px;
+    background: var(--White);
+    padding: 36px;
+    border: 2px solid transparent;
+
+    h2 {
+        font-size: clamp(24px, 4vw, 36px);
+        transition: var(--Animation-Duration);
+    }
+
+    p {
+        transition: var(--Animation-Duration);
+
+        @media #{rs.$bp-xl} {
+            font-size: 18px;
+        }
+    }
+
+    &:hover,
+    &:focus {
+        border-color: var(--Primary);
+    }
+}

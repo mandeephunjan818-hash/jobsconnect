@@ -1,0 +1,17 @@
+@use 'rs';
+
+/* Preloader CSS */
+
+.preloader {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999999;
+    top: 0;
+    left: 0;
+    background-color: var(--Heading);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}

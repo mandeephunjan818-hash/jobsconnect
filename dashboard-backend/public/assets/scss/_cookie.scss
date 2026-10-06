@@ -1,0 +1,63 @@
+@use 'rs';
+
+/* Cookie CSS */
+
+.cookiealert {
+   position: fixed;
+   left: 1rem;
+   bottom: 1rem;
+   z-index: 1000;
+   max-width: 280px;
+   padding: 30px 22px;
+   border-radius: 12px;
+   opacity: 0;
+   visibility: hidden;
+   transform: translateY(-16px);
+   transition: var(--Animation-Duration);
+   background-color: var(--Background);
+   color: var(--White);
+
+   @media #{rs.$bp-sm} {
+      max-width: 360px;
+   }
+
+   @media #{rs.$bp-md} {
+      max-width: 550px;
+   }
+
+   @media #{rs.$bp-lg} {
+      max-width: 700px;
+      left: 2rem;
+      bottom: 2rem;
+      padding: 40px 32px;
+   }
+
+   &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+   }
+
+   p {
+      font-size: 12px;
+      color: var(--Text);
+
+      @media #{rs.$bp-md} {
+         font-size: 14px;
+      }
+
+      @media #{rs.$bp-xl} {
+         font-size: 16px;
+      }
+   }
+
+   a {
+      color: var(--White);
+      font-weight: 400;
+
+      &:hover,
+      &:focus {
+         color: var(--Primary);
+      }
+   }
+}

@@ -1,0 +1,20 @@
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Next.js Build Outputs & Local Prerenders
+**/.next/
+.next/
+**/out/
+**/build/
+**/dist/
+
+# Match ALL Environment Configs Everywhere (RECURSIVE)
+**/.env*
+.env*
+**/*.env
+**/*.env.*
+
+# System files & Manifest logs
+**/.DS_Store
+**/*.tsbuildinfo

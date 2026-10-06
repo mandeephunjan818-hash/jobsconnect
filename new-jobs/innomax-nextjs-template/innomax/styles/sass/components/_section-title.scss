@@ -1,0 +1,54 @@
+.section-title,
+.section-title-s2 {
+	margin-bottom: 60px;
+	text-align: center;
+	
+	@include media-query(767px) {
+		margin-bottom: 40px;
+	}
+
+	h2 {
+		font-size: 42px;
+		line-height: 50px;
+		margin: 0;
+		position: relative;
+		font-family: $heading-font;
+		font-weight: 700;
+		color: $heading-color;
+		display: inline-block;
+		padding-bottom: 20px;
+		position: relative;
+		margin-top: 0px;
+
+		@media(max-width:1200px){
+			font-size: 35px;
+		}
+
+		@include media-query(767px) {
+			font-size: 32px;
+			line-height: 40px;
+		}
+
+		@include media-query(575px) {
+			font-size: 25px;
+			line-height: 18px;
+		}
+
+	}
+
+	p{
+		font-size: 18px;
+		color: $light;
+		margin-bottom: 0;
+	}
+}
+
+
+.section-title-s2{
+	text-align: left;
+
+	@media(max-width:991px){
+		text-align: center;
+	}
+	
+}
