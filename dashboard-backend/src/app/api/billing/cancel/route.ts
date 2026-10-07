@@ -17,7 +17,7 @@ import { UserProfile } from '@/modal/User';
 import mongoose from 'mongoose';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2026-05-27.dahlia',
+    apiVersion: '2026-08-26.dahlia',
 });
 
 const CANCELABLE_STATUSES = new Set(['active', 'trialing']);

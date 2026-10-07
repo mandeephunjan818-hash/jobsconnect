@@ -109,14 +109,19 @@ const VALID_ROLES: UserRole[] = ['user', 'sub-admin', 'admin'];
 const DEFAULT_ROLE: UserRole = 'user';
 const TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
-const useSecureCookies = process.env.NODE_ENV === 'production';
+const useSecureCookies = (process.env.NEXTAUTH_URL ?? '').startsWith('https://');
 
 const REGISTRATION_TOKEN_SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET!);
 
-if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.startsWith('https://')) {
-    throw new Error(
-        '[auth] NEXTAUTH_URL must be set to an https:// URL in production.'
-    );
+if (process.env.NODE_ENV === 'production') {
+  const url = process.env.NEXTAUTH_URL ?? '';
+  const isHttps = url.startsWith('https://');
+  const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)/.test(url);
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
+  if (!isBuildPhase && !isHttps && !isLocalhost) {
+    throw new Error('[auth] NEXTAUTH_URL must be an https:// URL in production.');
+  }
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

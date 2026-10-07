@@ -25,7 +25,7 @@ import { CreditWallet, ICreditBatch, ICreditWalletDocument } from '@/modal/Credi
 import { CreditTransaction } from '@/modal/CreditTransaction';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2026-05-27.dahlia',
+    apiVersion: '2026-08-26.dahlia',
 });
 
 // ─────────────────────────────────────────────────────────────

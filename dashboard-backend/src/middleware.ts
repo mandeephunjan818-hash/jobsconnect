@@ -1,17 +1,12 @@
-// middleware.ts — SECURITY HARDENED v4
-// v4 changes:
-//  - Added SERVICE_BYPASS_PATHS (webhooks, qstash, frontend/revalidate).
-//    These routes execute HERE (this project), not just proxied through
-//    the frontend gateway, so this middleware must recognize them
-//    independently — the gateway's bypass alone was not enough, since
-//    the frontend's catch-all /api/:path* rewrite forwards unmatched
-//    API calls straight back to this dashboard project.
-//  - Service-bypass routes still go through rate limiting (keyed by
-//    path, since there's no user/IP identity worth keying on for
-//    server-to-server calls) but skip same-origin, CSRF, idempotency,
-//    and the token/permission gate entirely. Authenticity for these
-//    routes MUST be enforced inside the route handler itself via a
-//    shared secret (x-revalidate-secret) or signature (QStash/Stripe).
+// middleware.ts — SECURITY HARDENED v5
+// v5 changes:
+//  - Replaced single-origin (SITE_URL) trust checks with a TRUSTED_ORIGINS
+//    list loaded from env. Enables a dashboard deployment to accept
+//    /api/* calls proxied from multiple frontend sites.
+//  - TRUSTED_ORIGINS falls back to [SITE_URL] when unset, so single-site
+//    deployments need no config change.
+//  - Added Vary: Origin on CORS responses to prevent CDN cache poisoning
+//    across origins.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -25,11 +20,25 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "";
-if (!SITE_URL && process.env.NODE_ENV === "production") {
+
+const TRUSTED_ORIGINS: string[] = (
+  process.env.TRUSTED_ORIGINS
+    ? process.env.TRUSTED_ORIGINS.split(",")
+    : [SITE_URL]
+)
+  .map((o) => o.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+if (TRUSTED_ORIGINS.length === 0 && process.env.NODE_ENV === "production") {
   throw new Error(
-    "[middleware] NEXT_PUBLIC_SITE_URL must be set in production. " +
-    "All same-origin API calls will be blocked without it."
+    "[middleware] Neither TRUSTED_ORIGINS nor NEXT_PUBLIC_SITE_URL is set. " +
+    "All same-origin API calls will be blocked."
   );
+}
+
+function isTrustedOrigin(v: string | null): boolean {
+  if (!v) return false;
+  return TRUSTED_ORIGINS.some((o) => v === o || v.startsWith(`${o}/`));
 }
 
 const redis = new Redis({
@@ -51,10 +60,6 @@ const apiLimiter = new Ratelimit({
   prefix: "ratelimit:api",
 });
 
-// Separate, more generous limiter for verified server-to-server callers
-// (QStash, revalidate, webhooks). Keyed by path rather than IP/user since
-// these calls come from infra, not end users — a single QStash worker or
-// your own server can legitimately fire many of these per minute.
 const serviceLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(300, "1 m"),
@@ -64,18 +69,6 @@ const serviceLimiter = new Ratelimit({
 
 const CDN_TTL = parseInt(process.env.CDN_CACHE_TTL ?? "31536000", 10);
 
-// ── Service-to-service routes ──────────────────────────────────────────────
-// Authenticated by a secret/signature INSIDE the route handler, not by
-// Origin/Referer or a user session cookie. Real browsers always attach
-// Origin or Referer on a same-origin mutating request; QStash callbacks,
-// Stripe webhooks, and internal server-to-server fetches never do — that's
-// expected for these specific paths, not suspicious.
-//
-// ⚠️  Every path listed here MUST verify a secret or signature in its own
-//     route handler (e.g. x-revalidate-secret for revalidate, QStash's
-//     Receiver.verify() for qstash, Stripe-Signature for webhooks). This
-//     bypass removes the origin/CSRF/token gate — the handler becomes the
-//     only remaining line of defense for these routes.
 const SERVICE_BYPASS_PATHS = [
   /^\/api\/webhooks\//,
   /^\/api\/qstash\//,
@@ -129,15 +122,12 @@ function isValidHost(request: NextRequest): boolean {
   return true;
 }
 
-// ── Allowed front-end pages ────────────────────────────────────────────────
 function isAllowedPage(pathname: string): boolean {
-  // Only root, /auth/*, /dashboard/*, /admin/* are permitted
   return /^\/($|auth\/|dashboard\/|admin\/|dash\/|assets\/|images\/)/.test(pathname);
 }
 
 const GOOGLE_AUTH_ORIGINS = [
   "https://accounts.google.com",
-  "https://accounts.youtube.com",
   "https://auth0.com",
 ];
 const GOOGLE_MAPS_ORIGINS = ["https://maps.googleapis.com", "https://maps.gstatic.com"];
@@ -215,13 +205,13 @@ function applySecurityHeaders(res: NextResponse, nonce: string): void {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com https://services.leadconnectorhq.com https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net`,
-      "frame-src 'self' https://widgets.leadconnectorhq.com https://www.youtube.com https://www.google.com",
-      "img-src 'self' https://assets.cdn.filesafe.space https://widgets.leadconnectorhq.com data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
-      "font-src 'self' https://fonts.bunny.net https://widgets.leadconnectorhq.com data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
-      "style-src 'self' https://fonts.bunny.net https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
-      "connect-src 'self' https://cdn.jsdelivr.net https://stcdn.leadconnectorhq.com https://services.msgsndr.com https://services.leadconnectorhq.com https://widgets.leadconnectorhq.com wss: https://accounts.google.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
-      "media-src 'self' https://widgets.leadconnectorhq.com https://res.cloudinary.com",
+      "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net",
+      "frame-src 'self' https://www.google.com",
+      "img-src 'self' https://assets.cdn.filesafe.space data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
+      "font-src 'self' https://fonts.bunny.net data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
+      "style-src 'self' https://fonts.bunny.net 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
+      "connect-src 'self' https://cdn.jsdelivr.net https://services.msgsndr.com wss: https://accounts.google.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
+      "media-src 'self' https://res.cloudinary.com",
       "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",
@@ -232,10 +222,10 @@ function applySecurityHeaders(res: NextResponse, nonce: string): void {
 
 function addCorsHeadersIfNeeded(res: NextResponse, request: NextRequest): void {
   const origin = request.headers.get("origin");
-  const allowedOrigins = [SITE_URL].filter(Boolean);
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && isTrustedOrigin(origin)) {
     res.headers.set("Access-Control-Allow-Origin", origin);
     res.headers.set("Access-Control-Allow-Credentials", "true");
+    res.headers.set("Vary", "Origin");
   }
 }
 
@@ -331,7 +321,7 @@ async function hasWalletAccount(request: NextRequest): Promise<boolean> {
     return hasActivity;
   } catch (err) {
     console.warn("[middleware] wallet check failed — failing open:", err);
-    return true; // don't hard-block if the wallet service is down
+    return true;
   }
 }
 
@@ -349,12 +339,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
   if (!isValidHost(request)) return new NextResponse(null, { status: 400 });
 
-  // ── Service-to-service bypass ──────────────────────────────────────────
-  // Runs before EVERYTHING else that assumes a browser/session context:
-  // same-origin check, extension-injection heuristics, bot filtering,
-  // rate limiting keyed by user/IP, idempotency, CSRF, and the /api/*
-  // token+permission gate. These routes are verified inside their own
-  // handlers via secret/signature instead.
   if (isServiceBypassPath(pathname)) {
     let rl = { success: true, remaining: 999 };
     try {
@@ -413,33 +397,50 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     if (isHeadlessOrAutomation(userAgent)) return new NextResponse(null, { status: 403 });
   }
 
-  // ── B2. Same-origin enforcement ────────────────────────────────────────────
+  // ── Same-origin enforcement (multi-origin aware) ────────────────────────
   if (pathname.startsWith("/api/")) {
     const isServerSideCall = !origin && !referer;
-    const isSameOrigin =
-      (origin && SITE_URL && origin === SITE_URL) ||
-      (referer && SITE_URL && referer.startsWith(SITE_URL));
+    const isSameOrigin = isTrustedOrigin(origin) || isTrustedOrigin(referer);
     const isGoogleAllowed = isGoogleAllowedOrigin(origin, pathname);
-    const isGoogleReferer = referer ? GOOGLE_AUTH_ORIGINS.some((a) => referer.startsWith(a)) : false;
+    const isGoogleReferer = referer
+      ? GOOGLE_AUTH_ORIGINS.some((a) => referer.startsWith(a))
+      : false;
 
-    if (!isServerSideCall && !isSameOrigin && !isGoogleAllowed && !isGoogleReferer && method !== "OPTIONS") {
-      const res = NextResponse.json({ error: "Cross-origin API calls are not allowed" }, { status: 403 });
+    if (
+      !isServerSideCall &&
+      !isSameOrigin &&
+      !isGoogleAllowed &&
+      !isGoogleReferer &&
+      method !== "OPTIONS"
+    ) {
+      const res = NextResponse.json(
+        { error: "Cross-origin API calls are not allowed" },
+        { status: 403 }
+      );
       applySecurityHeaders(res, nonce);
       return res;
     }
   }
 
   if (pathname.startsWith("/api/") && method === "OPTIONS") {
-    const allowedOrigins = [SITE_URL].filter(Boolean);
     const isGooglePreflight = isGoogleAllowedOrigin(origin, pathname);
-    if ((origin && allowedOrigins.includes(origin)) || isGooglePreflight) {
+    const isTrusted = isTrustedOrigin(origin);
+
+    if (isTrusted || isGooglePreflight) {
       const res = new NextResponse(null, { status: 204 });
       if (origin) {
         res.headers.set("Access-Control-Allow-Origin", origin);
         res.headers.set("Access-Control-Allow-Credentials", "true");
+        res.headers.set("Vary", "Origin");
       }
-      res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-      res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Idempotency-Key");
+      res.headers.set(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+      );
+      res.headers.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, X-Requested-With, Idempotency-Key"
+      );
       applySecurityHeaders(res, nonce);
       return res;
     }
@@ -486,7 +487,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     }
   }
 
-  // ── Public routes ──────────────────────────────────────────────────────────
   if (isPublicRoute(permKey)) {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     applyOutputHeaders(res, cacheHeaders, routeConfig?.tags);
@@ -495,7 +495,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     return res;
   }
 
-  // ── H5. Idempotency guard ──────────────────────────────────────────────────
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && pathname.startsWith("/api/")) {
     const idemKey = request.headers.get("idempotency-key");
     if (idemKey) {
@@ -507,11 +506,10 @@ export default async function middleware(request: NextRequest): Promise<NextResp
         applySecurityHeaders(res, nonce);
         return res;
       }
-      redis.set(idemRedisKey, "1", { ex: 10 }).catch(() => { });
+      redis.set(idemRedisKey, "1", { ex: 10 }).catch(() => {});
     }
   }
 
-  // ── CSRF guard ──────────────────────────────────────────────────────────
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && pathname.startsWith("/api/")) {
     if (token) {
       if (!origin && !referer) {
@@ -526,7 +524,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     }
   }
 
-  // ── /admin/* role guard ─────────────────────────────────────────────────
   if (pathname.startsWith("/admin")) {
     if (!token) {
       const url = new URL("/auth/sign-in", request.url);
@@ -556,7 +553,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     return res;
   }
 
-  // ── 🔒 /dashboard authentication guard with onboarding & plan check ──
   if (pathname.startsWith("/dashboard")) {
     if (!token) {
       const url = new URL("/auth/sign-in", request.url);
@@ -606,7 +602,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     return res;
   }
 
-  // ── /api/* permission checks ───────────────────────────────────────────────
   if (pathname.startsWith("/api/")) {
     if (!token) {
       const res = NextResponse.json({ error: "Unauthorized", required: permKey }, { status: 401 });
@@ -639,7 +634,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
     return res;
   }
 
-  // ── Page guard: only auth, dashboard, admin, and root are allowed ────────
   if (!isAllowedPage(pathname)) {
     const url = new URL('/', request.url);
     return NextResponse.redirect(url, 307);

@@ -1,4 +1,12 @@
-// middleware.ts — FRONTEND GATEWAY (New in Canada Jobs — no dashboard/admin/auth proxy)
+// middleware.ts — FRONTEND GATEWAY v4 (multi-origin trusted list)
+// v4 changes:
+//  - Replaced the fixed [SITE_URL, DASHBOARD_URL] array with a
+//    TRUSTED_ORIGINS env var (comma-separated) so a single frontend can
+//    trust its own origin, the dashboard, and any sibling frontends.
+//  - Falls back to [SITE_URL, DASHBOARD_URL] when TRUSTED_ORIGINS is unset,
+//    so existing single-site deployments need no config change.
+//  - Added Vary: Origin on CORS responses to prevent CDN cache poisoning
+//    across origins.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -14,11 +22,22 @@ const DASHBOARD_URL =
     process.env.DASHBOARD_URL?.replace(/\/$/, "") ??
     "https://jobs-connect-dashboard.vercel.app";
 
-// Kept even though this site has no dashboard proxy: /api/blog-comments
-// (and any other same-origin fetches from server actions) still need
-// SITE_URL to be a trusted origin. DASHBOARD_URL is harmless to keep in
-// case any future cross-site admin action calls this site's /api/* routes.
-const TRUSTED_ORIGINS = [SITE_URL, DASHBOARD_URL].filter(Boolean);
+// Comma-separated list of origins allowed to call this app's /api/* routes.
+// Falls back to [SITE_URL, DASHBOARD_URL] when unset — same behavior as v3.
+const TRUSTED_ORIGINS: string[] = (
+    process.env.TRUSTED_ORIGINS
+        ? process.env.TRUSTED_ORIGINS.split(",")
+        : [SITE_URL, DASHBOARD_URL]
+)
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
+function isTrustedOrigin(value: string | null): boolean {
+    if (!value) return false;
+    return TRUSTED_ORIGINS.some(
+        (o) => value === o || value.startsWith(`${o}/`)
+    );
+}
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -73,6 +92,10 @@ const ALLOWED_PAGE_PATTERNS: RegExp[] = [
     /^\/blogs\/[^/]+$/,
     /^\/jobs\/?$/,
     /^\/jobs\/[^/]+$/,
+    /^\/auth\//,
+    /^\/dashboard\/?/,
+    /^\/admin\//,
+    /^\/dash\/assets\//,
 ];
 
 function isAllowedPage(pathname: string): boolean {
@@ -97,13 +120,13 @@ function applySecurityHeaders(res: NextResponse): void {
         "Content-Security-Policy",
         [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com https://services.leadconnectorhq.com https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net",
-            "frame-src 'self' https://widgets.leadconnectorhq.com https://www.youtube.com https://www.google.com",
-            "img-src 'self' https://jobs-connect.vercel.app https://assets.cdn.filesafe.space https://widgets.leadconnectorhq.com data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
-            "font-src 'self' https://fonts.bunny.net https://widgets.leadconnectorhq.com data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
-            "style-src 'self' https://fonts.bunny.net https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
-            "connect-src 'self' https://cdn.jsdelivr.net https://stcdn.leadconnectorhq.com https://services.msgsndr.com https://services.leadconnectorhq.com https://widgets.leadconnectorhq.com wss: https://accounts.google.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
-            "media-src 'self' https://widgets.leadconnectorhq.com https://res.cloudinary.com https://jobs-connect.vercel.app",
+            "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net",
+            "frame-src 'self' https://www.google.com",
+            "img-src 'self' https://jobs-connect.vercel.app https://assets.cdn.filesafe.space data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
+            "font-src 'self' https://fonts.bunny.net data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
+            "style-src 'self' https://fonts.bunny.net 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
+            "connect-src 'self' https://cdn.jsdelivr.net https://services.msgsndr.com  wss: https://accounts.google.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
+            "media-src 'self' https://res.cloudinary.com https://jobs-connect.vercel.app",
             "worker-src 'self' blob:",
             "object-src 'none'",
             "base-uri 'self'",
@@ -162,11 +185,10 @@ export default async function middleware(request: NextRequest) {
     // ═══════════════════════════════════════════════════════
     if (pathname.startsWith("/api/")) {
         const isServerSideCall = !origin && !referer;
-        const isTrustedOrigin =
-            (origin && TRUSTED_ORIGINS.includes(origin)) ||
-            (referer && TRUSTED_ORIGINS.some((o) => referer.startsWith(o)));
+        const isTrusted =
+            isTrustedOrigin(origin) || isTrustedOrigin(referer);
 
-        if (!isServerSideCall && !isTrustedOrigin && method !== "OPTIONS") {
+        if (!isServerSideCall && !isTrusted && method !== "OPTIONS") {
             const res = NextResponse.json(
                 { error: "Cross-origin API calls are not allowed" },
                 { status: 403 }
@@ -177,9 +199,10 @@ export default async function middleware(request: NextRequest) {
 
         if (method === "OPTIONS") {
             const res = new NextResponse(null, { status: 204 });
-            if (origin && TRUSTED_ORIGINS.includes(origin)) {
+            if (origin && isTrustedOrigin(origin)) {
                 res.headers.set("Access-Control-Allow-Origin", origin);
                 res.headers.set("Access-Control-Allow-Credentials", "true");
+                res.headers.set("Vary", "Origin");
             }
             res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
             res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Idempotency-Key");

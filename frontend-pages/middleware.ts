@@ -1,15 +1,19 @@
-// middleware.ts — FRONTEND GATEWAY v3
-// v3 changes:
-//  - Service-bypass paths (webhooks, qstash, frontend/revalidate) now
-//    ALSO go through rate limiting before being let through, instead of
-//    skipping straight to NextResponse.next(). A completely unlimited
-//    bypass is a resource-exhaustion risk even if the handler ultimately
-//    rejects unsigned requests — the rate limiter keeps that rejection
-//    cheap at scale.
-//  - Reminder: these paths must be excluded from the blanket
-//    `/api/:path* -> DASHBOARD_URL/api/:path*` rewrite in next.config.ts
-//    if they're meant to be handled by THIS project rather than proxied
-//    to the dashboard. See note at the bottom of this file.
+// middleware.ts — FRONTEND GATEWAY v4 (multi-origin trusted list)
+// v4 changes:
+//  - Replaced the fixed [SITE_URL, DASHBOARD_URL] array with a
+//    TRUSTED_ORIGINS env var (comma-separated) so a single frontend can
+//    trust its own origin, the dashboard, and any sibling frontends.
+//  - Falls back to [SITE_URL, DASHBOARD_URL] when TRUSTED_ORIGINS is unset,
+//    so existing deployments need no config change.
+//  - Added Vary: Origin on CORS responses to prevent CDN cache poisoning.
+//  - Tightened referer matching to `=== origin` or `startsWith(origin + "/")`
+//    so that "https://site-a.com.evil.com" cannot spoof a trusted origin.
+//
+//  (unchanged from v3)
+//  - Service-bypass paths (webhooks, qstash, frontend/revalidate) still go
+//    through rate limiting before being let through.
+//  - These paths must be excluded from the catch-all
+//    `/api/:path* -> DASHBOARD_URL/api/:path*` rewrite in next.config.ts.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -24,7 +28,23 @@ if (!SITE_URL && process.env.NODE_ENV === "production") {
 const DASHBOARD_URL =
     process.env.DASHBOARD_URL?.replace(/\/$/, "") ??
     "https://jobs-connect-dashboard.vercel.app";
-const TRUSTED_ORIGINS = [SITE_URL, DASHBOARD_URL].filter(Boolean);
+
+// Comma-separated list of origins allowed to call this app's /api/* routes.
+// Falls back to [SITE_URL, DASHBOARD_URL] when unset — same behavior as v3.
+const TRUSTED_ORIGINS: string[] = (
+    process.env.TRUSTED_ORIGINS
+        ? process.env.TRUSTED_ORIGINS.split(",")
+        : [SITE_URL, DASHBOARD_URL]
+)
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+
+function isTrustedOrigin(value: string | null): boolean {
+    if (!value) return false;
+    return TRUSTED_ORIGINS.some(
+        (o) => value === o || value.startsWith(`${o}/`)
+    );
+}
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -131,13 +151,13 @@ function applySecurityHeaders(res: NextResponse): void {
         "Content-Security-Policy",
         [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com https://services.leadconnectorhq.com https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net",
-            "frame-src 'self' https://widgets.leadconnectorhq.com https://www.youtube.com https://www.google.com",
-            "img-src 'self' https://assets.cdn.filesafe.space https://widgets.leadconnectorhq.com data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
-            "font-src 'self' https://fonts.bunny.net https://widgets.leadconnectorhq.com data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
-            "style-src 'self' https://fonts.bunny.net https://stcdn.leadconnectorhq.com https://widgets.leadconnectorhq.com 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
-            "connect-src 'self' https://cdn.jsdelivr.net https://stcdn.leadconnectorhq.com https://services.msgsndr.com https://services.leadconnectorhq.com https://widgets.leadconnectorhq.com wss: https://accounts.google.com https://www.youtube.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
-            "media-src 'self' https://widgets.leadconnectorhq.com https://res.cloudinary.com",
+            "script-src 'self' 'unsafe-inline' https://cdn.socket.io https://www.gstatic.com https://www.google.com  https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://cdn.jsdelivr.net",
+            "frame-src 'self' https://www.google.com",
+            "img-src 'self' https://assets.cdn.filesafe.space data: blob: https://res.cloudinary.com https://lh3.googleusercontent.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://maps.gstatic.com https://*.fbcdn.net https://*.cdninstagram.com https://*.twimg.com https://*.linkedin.com https://*.pinimg.com https://*.slack-edge.com https://*.telegram.org",
+            "font-src 'self' https://fonts.bunny.net data: https://fonts.gstatic.com https://*.tinymce.com https://*.tiny.cloud",
+            "style-src 'self' https://fonts.bunny.net 'unsafe-inline' https://fonts.googleapis.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com",
+            "connect-src 'self' https://cdn.jsdelivr.net https://services.msgsndr.com  wss: https://accounts.google.com https://*.tinymce.com https://*.tiny.cloud https://maps.googleapis.com https://graph.facebook.com https://api.twitter.com https://api.linkedin.com",
+            "media-src 'self' https://res.cloudinary.com",
             "worker-src 'self' blob:",
             "object-src 'none'",
             "base-uri 'self'",
@@ -174,9 +194,7 @@ export default async function middleware(request: NextRequest) {
     // ═══════════════════════════════════════════════════════
     // Service-to-service bypass — must come before bot check
     // and before the CSRF / rate-limit logic inside the /api/
-    // branch below. Still rate-limited (by path) to keep an
-    // unauthenticated flood cheap even before the handler's
-    // own secret/signature check runs.
+    // branch below.
     // ═══════════════════════════════════════════════════════
     if (isServiceBypassPath(pathname)) {
         let rl = { success: true, remaining: 999 };
@@ -229,11 +247,10 @@ export default async function middleware(request: NextRequest) {
     // ═══════════════════════════════════════════════════════
     if (pathname.startsWith("/api/")) {
         const isServerSideCall = !origin && !referer;
-        const isTrustedOrigin =
-            (origin && TRUSTED_ORIGINS.includes(origin)) ||
-            (referer && TRUSTED_ORIGINS.some((o) => referer.startsWith(o)));
+        const isTrusted =
+            isTrustedOrigin(origin) || isTrustedOrigin(referer);
 
-        if (!isServerSideCall && !isTrustedOrigin && method !== "OPTIONS") {
+        if (!isServerSideCall && !isTrusted && method !== "OPTIONS") {
             const res = NextResponse.json(
                 { error: "Cross-origin API calls are not allowed" },
                 { status: 403 }
@@ -244,9 +261,10 @@ export default async function middleware(request: NextRequest) {
 
         if (method === "OPTIONS") {
             const res = new NextResponse(null, { status: 204 });
-            if (origin && TRUSTED_ORIGINS.includes(origin)) {
+            if (origin && isTrustedOrigin(origin)) {
                 res.headers.set("Access-Control-Allow-Origin", origin);
                 res.headers.set("Access-Control-Allow-Credentials", "true");
+                res.headers.set("Vary", "Origin");
             }
             res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
             res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Idempotency-Key");
@@ -327,7 +345,7 @@ export const config = {
     ],
 };
 
-// ── Bot helpers (unchanged) ────────────────────────────
+// ── Bot helpers (unchanged from v3) ────────────────────
 const ALLOWED_BOTS: Record<string, { label: string; allowApi: boolean }> = {
     googlebot: { label: "Google", allowApi: false },
     bingbot: { label: "Bing", allowApi: false },
@@ -377,7 +395,7 @@ function isHeadlessOrAutomation(ua: string): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════
-// ⚠️  next.config.ts note (not part of this file):
+// ⚠️  next.config.ts note (unchanged from v3):
 // The catch-all rewrite `source: '/api/:path*' -> DASHBOARD_URL/api/:path*`
 // will forward /api/qstash/* and /api/frontend/revalidate to the dashboard
 // project unless you add explicit exclusions ABOVE that rule, e.g.:

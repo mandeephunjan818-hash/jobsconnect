@@ -22,7 +22,7 @@ const redis = new Redis({
 });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2026-05-27.dahlia',
+    apiVersion: '2026-08-26.dahlia',
 });
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;

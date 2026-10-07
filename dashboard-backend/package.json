@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start"
   },
@@ -23,12 +23,14 @@
     "exceljs": "^4.4.0",
     "gsap": "^3.13.0",
     "jarallax": "^2.2.1",
+    "jose": "^6.2.12",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.8.0",
     "marquee3000": "^1.1.1",
     "mongodb": "^6.21.0",
     "mongoose": "^9.4.1",
     "motion": "^12.38.0",
+    "nanoid": "^6.0.2",
     "next": "^15.2.4",
     "next-auth": "^4.24.14",
     "nodemailer": "^9.0.4",

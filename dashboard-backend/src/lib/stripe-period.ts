@@ -9,7 +9,7 @@
  * either or both locations may be populated:
  *
  *   - Older API versions: subscription.current_period_start/end (top-level)
- *   - Newer API versions (incl. 2026-05-27.dahlia, used in this codebase):
+ *   - Newer API versions (incl. 2026-08-26.dahlia, used in this codebase):
  *     subscription.items.data[0].current_period_start/end
  *
  * The previous code in webhooks/stripe and billing/switch read ONLY the

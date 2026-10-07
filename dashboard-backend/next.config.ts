@@ -3,7 +3,8 @@ import path from "path";
 
 const nextConfig: NextConfig = {
 
-  assetPrefix: 'https://jobs-connect.vercel.app/dash',
+  // assetPrefix: 'https://jobs-connect.vercel.app/dash',
+   assetPrefix: '/dash',
 
   // ✅ Only use serverExternalPackages (remove the old key)
 
